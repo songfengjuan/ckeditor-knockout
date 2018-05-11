@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
+For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>CKEditor Sample</title>
+    <script src="js/requirejs/require.js"></script>
+    <script src="js/base_config.js"></script>
+    <script src="ckeditor.js"></script>
+
+</head>
+<body id="main">
+
+
+
+<main>
+
+    <button data-bind='click:add'>Add</button>
+    <div data-bind='foreach: items'>
+        <div data-bind='text: content'></div>
+        <textarea data-bind='ckeditor: content' rows='4'></textarea>
+    </div>
+
+</main>
+
+<script>
+    require(["jquery", "knockout", "ko-amd", "ko-switch", "ko-mapping"], function ($, ko) {
+        var TOOLBAR_CONFIG = [
+            { name: 'document', items: [ 'Print'] },
+            { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
+            { name: 'editing', items: [ 'Find', 'Replace', '-', 'SelectAll', '-', 'Scayt' ] },
+            { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat' ] },
+            { name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock' ] },
+            { name: 'styles', items: [ 'Styles', 'Format', 'Font', 'Fontsize' ] },
+            { name: 'colors', items: [ 'TextColor', 'BGColor' ] },
+            { name: 'tools', items: [ 'Maximize' ] }
+        ];
+
+        ko.bindingHandlers.ckeditor = {
+            init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+                var options = ko.utils.extend({
+                    toolbar: TOOLBAR_CONFIG,
+                    removePlugins: 'elementspath'
+                }, allBindings.get('ckeditorOptions') || {
+                });
+                var modelValue = valueAccessor();
+
+                var editor = CKEDITOR.replace(element, options);
+
+                editor.on('change', function () {
+                    modelValue(editor.getData());
+                });
+
+                //handle disposal (if KO removes by the template binding)
+                ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+                    if (editor) {
+                        CKEDITOR.remove(editor);
+                    };
+                });
+            },
+            update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+                var editor = new CKEDITOR.dom.element(element).getEditor();
+                editor.setData(ko.unwrap(valueAccessor()), null, true);
+            }
+        };
+
+        var viewModel = function () {
+            var self = {};
+
+            self.items = ko.observableArray();
+            self.items.push({content: ko.observable('<p>123</p>')});
+            self.items.push({content: ko.observable('<p>456</p>')});
+            self.add = function () {
+                self.items.push({
+                    content: ko.observable(new Date().toISOString())
+                });
+            };
+
+            return self;
+        }();
+
+        ko.applyBindings(viewModel);
+        window.viewModel = viewModel;
+
+    });
+
+</script>
+
+</body>
+</html>
